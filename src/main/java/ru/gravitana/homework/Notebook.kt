@@ -8,6 +8,12 @@ sealed interface Command {
     fun isValid(): Boolean
 }
 
+class Error(val error: String) : Command {
+    override fun isValid(): Boolean {
+        return true
+    }
+}
+
 class Exit() : Command {
     override fun isValid(): Boolean {
         return true
@@ -38,14 +44,12 @@ class AddEmail(val name: String, val email: String) : Command {
     }
 }
 
-fun readCommand(): Command? {
+fun readCommand(): Command {
     println("Введите команду")
+    val userInput: String = readlnOrNull().toString()
 
-    var userInput: String?
-    userInput = readlnOrNull()
-
-    if (userInput == null) {
-        return null
+    if (userInput.isBlank()) {
+        return Error("Command is empty")
     }
 
     when (userInput) {
@@ -55,7 +59,7 @@ fun readCommand(): Command? {
     }
 
     if (!userInput.startsWith("add ")) {
-        return null
+        return Error("This line is not a Command")
     }
 
     val inputLines = userInput.split(" ")
@@ -66,19 +70,20 @@ fun readCommand(): Command? {
     return when (currentCommand) {
         "phone" -> AddPhone(name, value)
         "email" -> AddEmail(name, value)
-        else -> null
+        else -> Error("Unknown Command")
     }
 }
 
 fun main() {
     var programGo = true
-    var command: Command?
+    var command: Command
 
     while (programGo) {
         command = readCommand()
 
-        if (command?.isValid() == true) {
+        if (command.isValid()) {
             when (command) {
+                is Error -> printError(command.error)
                 is AddEmail -> {
                     person.name = command.name
                     person.email = command.email
@@ -91,8 +96,16 @@ fun main() {
                 is Show -> printPerson()
                 else -> printHelp()
             }
+        } else {
+            printError("Argument is not correct")
         }
     }
+
+    println("Программа завершена")
+}
+
+fun printError(error: String) {
+    println("Error! $error")
 }
 
 fun printPerson() {
